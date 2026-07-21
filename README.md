@@ -68,10 +68,12 @@ gets committed.
 
 ## Install
 
-The skills are plain Claude Code skills — a single `SKILL.md` each, no
-dependencies. Package a folder as a `.skill` (zip it) and install via
-Settings > Capabilities, or use the `SKILL.md` directly if your setup reads
-skill sources from a folder.
+Each skill folder includes a pre-built `.skill` file (a zip archive under a
+different extension — nothing to build yourself). Upload it directly: attach
+it to a chat message, or Settings > Capabilities > Skills > "+" > Create skill
+> Upload (Cowork: Customize > Skills). The `SKILL.md` sitting next to it is
+the same content unpacked — read it directly if your setup reads skill
+sources from a folder instead of an upload.
 
 The harness is plain Python (`pip install -r runner/requirements.txt`).
 
