@@ -14,10 +14,13 @@ skills/
   ai-workflow-cost-levers/SKILL.md   — names the levers, given constraints
   cost-lever-eval/SKILL.md           — measures the two levers with real quality risk
 runner/
+  quick_check.py                      — LIGHT path: single-turn cheaper-model spot-check
   configs.py, tools.py, executor.py, run_eval.py, mock_backend.py, README.md
-                                      — the actual harness cost-lever-eval drives
+                                      — HEAVY path: the agentic harness cost-lever-eval drives
+example_specs/
+  classify_sentiment.json, summarize_subjective.json  — copy-me specs for quick_check
 example_fixture/
-  fixture_expr_eval/                 — a validated example task (stub + tests + reference solution)
+  fixture_expr_eval/                 — a validated example task for the heavy harness (stub + tests + reference solution)
 docs/
   Claude_API_Cost_Optimization_Reference.md   — the standalone reference version
   EXAMPLE_AUDIT.md                            — a full worked example, start to finish
@@ -38,12 +41,23 @@ verdict, not a generic list.
 
 The measurement companion. Two of the levers above — cheaper model tier, and
 executor+advisor — are the ones that can quietly degrade output quality, which
-makes "did we test it" the load-bearing question. This skill drives a small
-eval harness: build (or point at) a fixture with an objective success check (a
-test suite, a schema), run it under 2-3 model configurations, and report a
-pass-rate-and-cost table instead of a guess. Scope-gated to objective/
-test-suite tasks for now — a fuzzy/quality-judged task needs a rubric scorer,
-which isn't built yet.
+makes "did we test it" the load-bearing question. It has two paths, matched to
+the task shape:
+
+- **Light — `quick_check.py`** (most cases): a *single-turn* step (one prompt in,
+  one answer out — summarize, classify, extract, i.e. most n8n/Zapier nodes).
+  Feed it a handful of real inputs and two models; it runs both and compares —
+  auto-scored for label/JSON/field checks, side-by-side for subjective ones. No
+  fixture, no agent loop.
+- **Heavy — `run_eval.py`** (rare): a *long-horizon agentic* task, a model looping
+  with tools against an objective check (a test suite). Compares cheap-solo vs.
+  cheap+advisor vs. stronger and reports a pass-rate-and-cost table. This is the
+  one that needs a validated fixture.
+
+Sending a single-turn model swap through the heavy harness is the main way to
+overbuild — the skill routes you to the light path first. Fuzzy quality-judged
+tasks still get a side-by-side to eyeball, not an auto-score; a rubric scorer
+isn't built yet.
 
 The harness itself (`runner/`) is included — it holds no secrets anywhere in the
 code. It reads an API key from the environment at run time (`ANTHROPIC_API_KEY`,
@@ -71,12 +85,17 @@ Two ways:
   output: constraints, a verdict on every lever, the recompute check, and a
   concrete one-node fix. Fictionalized, but the finding pattern (a diff gets
   computed and then ignored) is common enough to be worth having a template for.
-- **Run it:** `cd runner && python mock_backend.py` — an offline, scripted
-  self-test with no API key and no cost. It proves the whole harness (agent
-  loop, tools, advisor consult, pytest scorer, cost aggregation, report table)
-  against `example_fixture/fixture_expr_eval/`, and asserts that a buggy
-  implementation fails while a correct one (with or without an advisor consult)
-  passes — i.e., that the scorer actually discriminates.
+- **Run the light path:** `cd runner && python quick_check.py --mock` — an
+  offline, scripted self-test with no API key and no cost. It runs a sentiment
+  step through a good and a deliberately bad "model" and asserts the scorer
+  separates them (5/5 vs 2/5), showing exactly which inputs the weak one botches.
+  Then copy a spec from `example_specs/` and run it for real with `--spec`.
+- **Run the heavy path:** `cd runner && python mock_backend.py` — an offline,
+  scripted self-test that proves the whole agentic harness (agent loop, tools,
+  advisor consult, pytest scorer, cost aggregation, report table) against
+  `example_fixture/fixture_expr_eval/`, and asserts that a buggy implementation
+  fails while a correct one (with or without an advisor consult) passes — i.e.,
+  that the scorer actually discriminates.
 
 ## Why this exists
 

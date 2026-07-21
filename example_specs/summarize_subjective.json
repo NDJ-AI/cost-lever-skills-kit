@@ -1,0 +1,12 @@
+{
+  "prompt": "Summarize the following support ticket in one sentence a manager could skim.\nTicket: {input}",
+  "models": {
+    "current": "claude-sonnet-5",
+    "candidate": "claude-haiku-4-5-20251001"
+  },
+  "check": { "type": "none" },
+  "cases": [
+    { "input": "Customer on the Pro plan says exports have failed silently for three days; no error shown, file just never downloads. They have a board demo Friday." },
+    { "input": "User can't log in after the SSO change; reset link goes to a 404. Second report this week for the same domain." }
+  ]
+}

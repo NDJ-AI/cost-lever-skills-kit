@@ -1,0 +1,15 @@
+{
+  "prompt": "Classify the sentiment of the text as exactly one of: positive, negative, neutral. Answer with only that one word.\nText: {input}",
+  "models": {
+    "current": "claude-sonnet-5",
+    "candidate": "claude-haiku-4-5-20251001"
+  },
+  "check": { "type": "label" },
+  "cases": [
+    { "input": "This is the best purchase I've made all year.", "expect": "positive" },
+    { "input": "Package arrived smashed and support ignored me.", "expect": "negative" },
+    { "input": "It works. Does what it says.", "expect": "neutral" },
+    { "input": "Absolutely love it, would buy again.", "expect": "positive" },
+    { "input": "Waste of money, broke in a week.", "expect": "negative" }
+  ]
+}

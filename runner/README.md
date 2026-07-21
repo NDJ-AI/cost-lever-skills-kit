@@ -1,9 +1,30 @@
-# Runner — cost-lever eval harness
+# Runner — cost-lever eval
+
+Two tools, matched to task shape. **Pick the light one first** — it fits most
+workflow cost questions, and the heavy one is easy to overbuild with.
+
+## Light path — `quick_check.py` (single-turn)
+
+For a step that calls the model **once** (summarize, classify, extract — most
+n8n/Zapier nodes). Runs a handful of real inputs through the current model and a
+cheaper candidate and compares: auto-scored for `label`/`json`/`contains` checks,
+side-by-side for subjective (`none`) steps. No fixture, no agent loop.
+
+```
+python quick_check.py --mock                    # offline self-test, no key/cost
+python quick_check.py --spec ../example_specs/classify_sentiment.json   # real run
+```
+
+Spec format and check types are documented at the top of `quick_check.py`;
+copy-me specs are in `../example_specs/`.
+
+## Heavy path — `run_eval.py` (agentic)
 
 Drives each model configuration through the executor agent loop against a
 fixture, scores the result with pytest, aggregates cost, and prints a comparison
-table. This is the objective (coding/test-suite) core; a fuzzy/rubric scorer for
-quality-judged tasks is a natural extension, not built here.
+table. Only for a task that **loops with tools** (a model writing/revising code
+until tests pass). This is the objective (coding/test-suite) core; a fuzzy/rubric
+scorer for quality-judged tasks is a natural extension, not built here.
 
 ## Files
 
@@ -15,7 +36,8 @@ quality-judged tasks is a natural extension, not built here.
 - `executor.py` — the backend-agnostic agent loop and the advisor consult.
 - `run_eval.py` — orchestration (N runs per config, fresh workdir each), cost
   aggregation, the report table, the real `AnthropicBackend`, and the CLI.
-- `mock_backend.py` — scripted backend + offline self-test (no API key, no cost).
+- `mock_backend.py` — scripted backend + offline self-test for the heavy path (no API key, no cost).
+- `quick_check.py` — the light single-turn path + its own offline `--mock` self-test.
 
 ## Run it
 

@@ -1,6 +1,6 @@
 ---
 name: cost-lever-eval
-description: 'Run a real, measured comparison of model configurations for an agentic coding task -- cheap executor alone vs. cheap executor + frontier advisor vs. a stronger model -- instead of guessing which to use. Use when someone has a long-horizon agentic task (coding, multi-step tool use) and asks which model to run it on, whether the executor+advisor pattern is worth it here, whether a cheaper model holds up, or wants a pass-rate-and-cost number behind the choice. Downstream of ai-workflow-cost-levers (which names the levers in the abstract) -- this skill measures them against an actual task with the eval harness. Objective/test-suite tasks only for now; fuzzy/quality-judged tasks need a rubric scorer that is not built yet.'
+description: 'Measure, instead of guessing, whether a cheaper model (or the executor+advisor pattern) holds up for a real task. Two paths: a LIGHT single-turn spot-check (quick_check.py) for the common case -- one prompt in, one answer out, like a summarize/classify/extract step in an n8n/Zapier/script workflow -- which runs a few real inputs through the current vs. a cheaper model and compares; and a HEAVY agentic harness (run_eval.py) for long-horizon multi-turn tool-using coding tasks, comparing cheap-solo vs. cheap+advisor vs. stronger. Use when someone asks which model to run a step on, whether a cheaper model is good enough, whether the executor+advisor pattern is worth it, or wants a pass-rate-and-cost number instead of a guess. Downstream of ai-workflow-cost-levers, which names the levers in the abstract. Objective/checkable success only for now (label/json/test-suite); fuzzy summary-quality steps get a side-by-side to eyeball, not an auto-score.'
 ---
 
 # Cost-Lever Eval
@@ -11,7 +11,54 @@ measurement companion to `ai-workflow-cost-levers`: that skill names the levers
 (cheaper model, executor+advisor); this one runs them against a real task and
 reports pass-rate and cost per config.
 
-## When this applies (and when it doesn't)
+## First: which of the two tools does this task need?
+
+There are two measurement paths in this kit. Pick before doing anything else --
+most cost-lever questions are the light one, and running the heavy harness on a
+single-turn step is the main way to overbuild here.
+
+- **Single-turn step** -- one prompt in, one answer out: summarize, classify,
+  extract fields, rewrite. This is *most* n8n / Zapier / script steps. Use the
+  **light path**: `quick_check.py`. No fixture, no agent loop, no reference
+  solution. Jump to "Light path" below.
+- **Long-horizon agentic task** -- a model runs a multi-turn loop, using tools,
+  writing and revising code against a check (e.g. "implement this module until the
+  tests pass"). Only this shape needs the full harness (`run_eval.py`) and the
+  executor+advisor lever. Continue to "Heavy path" below.
+
+If unsure: does the step call the model **once**, or does it **loop with tools**?
+Once → light. Loops → heavy. When someone drops in an n8n/Zapier export, look at
+the node: a single LLM node feeding the next step is single-turn; an agent node
+that iterates is not.
+
+## Light path: `quick_check.py` (single-turn)
+
+The honest test for "does a cheaper model hold up on this one step" is a
+side-by-side on real inputs, not a paragraph of reasoning.
+
+1. **Build a spec** from the workflow step: the prompt (with `{input}` where the
+   per-case text goes), the two models (`current` vs `candidate`), a check type,
+   and 5-10 *real* inputs pulled from the actual workflow. Check types:
+   - `label` / `contains` -- classification or any step with a known right answer
+     token (give each case an `expect`). Fully auto-scored.
+   - `json` -- extraction / structured output (optional `required_keys` per case).
+     Auto-scored on parse + keys present.
+   - `none` -- summaries and other subjective steps. No score; prints the pairs
+     side by side for the user to read. That *is* the deliverable here.
+2. **Run it:**
+   ```
+   python quick_check.py --spec my_step.json
+   python quick_check.py --mock      # offline self-test first, no key, no cost
+   ```
+3. **Read it:** pass-rate first (objective) or read the pairs (subjective). A
+   candidate that matches the current model on real inputs at lower cost is a real
+   win; a gap of even 1-2 cases is the signal to keep the current model here.
+
+See `example_specs/` for a `label` spec and a `none` spec to copy. This path is
+enough for the large majority of workflow cost questions -- don't escalate to the
+heavy harness unless the task genuinely loops.
+
+## Heavy path: when this applies (and when it doesn't)
 
 **Applies:** a long-horizon agentic task with an *objective* success check -- a
 pytest suite, a schema, a validator -- where "which model config" is a live
@@ -19,8 +66,7 @@ question and cost matters. This is the executor+advisor lever measured instead o
 assumed.
 
 **Doesn't apply:**
-- Single-turn Q&A or any non-loop task -- there's no agent loop and nothing to
-  escalate mid-task (the scope gate from `ai-workflow-cost-levers`). Say so and stop.
+- Single-turn steps -- use the light path above, not this.
 - A task with no objective check yet -- that's the *fuzzy* path (quality judged by
   a rubric + LLM-judge). The harness's fuzzy scorer isn't built. Don't fake an
   objective score for a fuzzy task: either help the user define a rubric and judge
