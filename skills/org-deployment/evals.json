@@ -1,0 +1,44 @@
+{
+  "skill_name": "claude-org-deployment",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "A 12-person med-spa chain hired me to set up Claude company-wide \u2014 finance automations first (monthly reporting, expense categorization), then marketing content workflows. The owner keeps asking whether they need 'Claude Enterprise.' Write up the deployment architecture and plan recommendation I should bring to the kickoff call. Save it as a markdown file.",
+      "expected_output": "Architecture doc establishing a layered model (org plan surface / shared integrations / headless API automations), recommending Team over Enterprise with explicit upgrade triggers (noting 12 < 20-seat self-serve Enterprise minimum), placing finance automations in the headless API layer with review gates, and covering guardrails.",
+      "files": [],
+      "assertions": [
+        "Recommends the Team plan (not Enterprise) for the 12-person client",
+        "Gives a factually specific seat-minimum reason Enterprise doesn't fit (self-serve Enterprise requires 20 seats)",
+        "Presents a layered architecture separating the human chat surface from a headless API automation layer",
+        "Places the finance automations in the headless/API layer rather than desktop or chat sessions",
+        "Names at least two concrete guardrails (review gate, schema validation, run logging, write-tool approval, spend limits)",
+        "Lists explicit future triggers that would justify upgrading to Enterprise"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "we're a 40 person company, everyone's been paying for claude pro individually out of pocket. we want shared access to google drive and slack context, and we want some scheduled weekly reports pulled from quickbooks. whats the actual setup here? step by step please. write it into a doc for me",
+      "expected_output": "Step-by-step consolidation onto a Team plan, org connectors admin-connected once (not per-person), scheduled QuickBooks reporting correctly placed in a headless API/automation layer (not chat or desktop), in a sensible sequence.",
+      "files": [],
+      "assertions": [
+        "Recommends consolidating everyone onto the Team plan",
+        "States org-level connectors are connected once by an admin and inherited by all members, not set up 40 times",
+        "Primary recommendation places scheduled QuickBooks reporting in a server-side/headless automation layer, not desktop scheduled tasks",
+        "Notes that API/automation usage is billed separately from chat-plan seats",
+        "Provides a clearly ordered step-by-step sequence"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Client wants every employee's Claude Cowork to come pre-loaded with the same set of custom skills and the same connectors to their internal tools \u2014 can I push those centrally, or does each person have to install everything manually? They're on the Team plan. Write me a short answer doc I can send them.",
+      "expected_output": "Names plugin marketplaces with installation states (required / installed by default / available / hidden) as the central distribution mechanism, org-level connectors connected by an admin, and notes the Team-vs-Enterprise distinction for per-group control.",
+      "files": [],
+      "assertions": [
+        "States that skills/plugins CAN be pushed centrally on the Team plan (via plugin marketplaces), not Enterprise-only",
+        "Names plugin installation states (required / installed by default / available / hidden or equivalent)",
+        "States connectors are admin-connected once at the org level and inherited by members",
+        "Correctly scopes the Team-vs-Enterprise distinction to per-group variation, not to whether central push exists at all"
+      ]
+    }
+  ]
+}

@@ -1,8 +1,10 @@
 # Cost-Lever Skills Kit
 
-Two Claude Code skills, plus a reference doc and a worked example, for one
-question: **for this AI-integrated workflow, which cost levers actually apply —
-and for the ones that risk quality, can we prove it instead of guessing?**
+Seven Claude Code skills covering two things: running a full AI-integration
+engagement end to end (discovery through a verified deliverable), and one
+narrower question inside it — **for this AI-integrated workflow, which cost
+levers actually apply, and for the ones that risk quality, can we prove it
+instead of guessing?**
 
 Built for n8n/Zapier/agent workflows using Claude (or similar LLM APIs), but the
 reasoning isn't platform-specific.
@@ -11,8 +13,14 @@ reasoning isn't platform-specific.
 
 ```
 skills/
-  ai-workflow-cost-levers/SKILL.md   — names the levers, given constraints
-  cost-lever-eval/SKILL.md           — measures the two levers with real quality risk
+  engagement-pipeline/SKILL.md          — orchestrator: discovery → scoping → architecture → build → verification
+  agent-architecture-advisor/SKILL.md   — should this even get built, and what shape
+  ai-integration-architect/SKILL.md     — org-wide "where does Claude actually sit"
+  agent-design-principles/SKILL.md      — is a multi-agent design actually sound
+  org-deployment/SKILL.md               — rolling Claude out across a team (plans, seats, connectors)
+    + benchmark.md, evals.json          — the with-skill vs. no-skill eval this one was built against
+  ai-workflow-cost-levers/SKILL.md      — names the cost levers, given constraints
+  cost-lever-eval/SKILL.md              — measures the two levers with real quality risk
 runner/
   quick_check.py                      — LIGHT path: single-turn cheaper-model spot-check
   configs.py, tools.py, executor.py, run_eval.py, mock_backend.py, README.md
@@ -25,6 +33,51 @@ docs/
   Claude_API_Cost_Optimization_Reference.md   — the standalone reference version
   EXAMPLE_AUDIT.md                            — a full worked example, start to finish
 ```
+
+Every skill folder above also ships a pre-built `.skill` file next to its
+`SKILL.md` — see Install below. The one exception is `engagement-pipeline`,
+which also calls a sixth skill, **`mcp-builder`**, at its build stage (for when
+the plan calls for a new reusable capability rather than a one-off workflow).
+That one isn't bundled here — it isn't this kit's own skill, and no local copy
+of it exists to include; if `engagement-pipeline` reaches that stage, `mcp-builder`
+needs to be available separately.
+
+## Discovery-to-delivery engagement stack
+
+Five skills, one flow — the shape every real engagement moves through: figure
+out if something's worth building, decide what it should look like, design it
+so it doesn't fall over, get it deployed to the people who'll use it, and (via
+the orchestrator) prove it works before calling it done. Skip a stage and you
+either overbuild something nobody needed, or ship something nobody can verify.
+
+- **`engagement-pipeline`** — the orchestrator. Runs the other skills in
+  sequence with explicit handoffs: discovery → scoping → architecture → build →
+  a verified deliverable. Reaches for `mcp-builder` (external, see above) at the
+  build stage when the answer is "new reusable capability," not "one workflow."
+- **`agent-architecture-advisor`** — the skeptic. Before any build: is this
+  worth building at all, and if so, what's the lightest shape (single-agent
+  loop, subagent delegation, a scheduled task, an MCP server, or a Skill)?
+  Pushes back on reaching for n8n/a custom server/a whole agent system when a
+  plain conversation with Claude already solves it.
+- **`ai-integration-architect`** — the org-wide version. Given a company's
+  existing tools, team, and goals, produces an integration architecture and
+  rollout plan — not a single automation spec. Not for a one-off build request
+  (that's `agent-architecture-advisor`).
+- **`agent-design-principles`** — once the decision to build is made, checks
+  whether the internal design actually holds up: failure modes, incentive
+  alignment, autonomy calibration, escalation paths, interface contracts
+  between agents, and whether each piece's scope is sized right.
+- **`org-deployment`** — the mechanics of rolling Claude out across a team:
+  plan selection (Pro/Max vs. Team vs. Enterprise), org-level connectors,
+  plugin marketplaces, Cowork admin controls, and the chat-surface-vs-headless-
+  API split. Includes the eval (`benchmark.md`, `evals.json`) it was built and
+  scored against — 100% vs. 56% assertion pass rate with-skill vs. without.
+
+## Cost-lever kit
+
+Two skills, plus a reference doc and a worked example, for the narrower
+question above — which AI-workflow cost levers actually apply, and can the
+risky ones be measured rather than guessed at.
 
 ### `ai-workflow-cost-levers`
 
